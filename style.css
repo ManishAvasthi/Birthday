@@ -1,0 +1,34 @@
+body { margin: 0; font-family: 'Segoe UI', sans-serif; text-align: center; overflow-x: hidden; }
+
+.page1 { background: linear-gradient(to right, #fbc2eb, #a6c1ee); color: #333; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 2rem; box-sizing: border-box; }
+
+.page2 { background: black; color: white; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; background-image: url('confetti.gif'); background-size: cover; background-repeat: no-repeat; padding: 2rem; box-sizing: border-box; }
+
+.emoji-top { position: absolute; top: 20px; width: 100%; display: flex; justify-content: space-around; font-size: 1.5rem; pointer-events: none; }
+
+.box { background: rgba(255, 255, 255, 0.6); padding: 2rem; border-radius: 20px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); font-size: 1.2rem; max-width: 90vw; width: 100%; max-width: 400px; cursor: pointer; }
+
+button { margin-top: 20px; padding: 0.7rem 1.5rem; font-size: 1rem; border: none; border-radius: 20px; background: linear-gradient(to right, #ff758c, #ff7eb3); color: white; cursor: pointer; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); }
+
+h1 { font-size: 2rem; margin-bottom: 30px; text-shadow: 0 0 10px white; max-width: 90%; word-break: break-word; }
+
+.cake { width: 120px; height: 100px; background: pink; border-radius: 10px; margin: 20px auto; position: relative; }
+
+.bear-img { width: 100%; max-width: 200px; margin-top: 20px; border-radius: 15px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); }
+
+.click { display: inline-block; animation: bounce 1s infinite; }
+
+@keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+@media (max-width: 480px) { .emoji-top { font-size: 1.2rem; }
+
+.box { font-size: 1rem; padding: 1.5rem; }
+
+button { font-size: 0.9rem; padding: 0.5rem 1rem; }
+
+h1 { font-size: 1.5rem; } }
+
+.birthday-content{
+	position: relative;
+	z-index: 10;
+}
