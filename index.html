@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Happy Birthday!</title>
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Canvas Confetti Library -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <!-- Tailwind Configuration for Custom Fonts & Keyframes -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { 
+            cursive: ['Caveat', 'cursive'],
+            poppins: ['Poppins', 'sans-serif'],
+          },
+          animation: {
+            'float-up': 'floatUp 8s infinite linear',
+            'pulse-fast': 'pulse 1s infinite alternate',
+            'float-bounce': 'floatBounce 4s ease-in-out infinite',
+            'flicker': 'flicker 0.6s infinite alternate',
+            'bounce-gift': 'bounceGift 2s infinite',
+          },
+          keyframes: {
+            floatUp: {
+              '0%': { transform: 'translateY(105vh) scale(0.8) rotate(0deg)', opacity: '1' },
+              '100%': { transform: 'translateY(-10vh) scale(1.2) rotate(360deg)', opacity: '0' },
+            },
+            floatBounce: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-10px)' },
+            },
+            flicker: {
+              '0%': { transform: 'translateX(-50%) scale(1) rotate(-2deg)' },
+              '100%': { transform: 'translateX(-50%) scale(1.15) rotate(2deg)' },
+            },
+            bounceGift: {
+              '0%, 20%, 50%, 80%, 100%': { transform: 'translateY(0)' },
+              '40%': { transform: 'translateY(-18px)' },
+              '60%': { transform: 'translateY(-10px)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * {
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Screen Transition State Helpers */
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.6s ease, transform 0.6s ease;
+      transform: scale(0.95);
+      z-index: 10;
+    }
+
+    .screen.active {
+      opacity: 1;
+      visibility: visible;
+      transform: scale(1);
+    }
+
+    /* Envelope Flap Transition */
+    .envelope-box.open .envelope-flap {
+      transform: rotateX(180deg);
+    }
+
+    /* Balloon Revealed Text Transition */
+    .balloon-box.popped .balloon-svg {
+      display: none;
+    }
+    .balloon-box.popped .balloon-word {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* Typewriter blinking cursor */
+    .typing-cursor::after {
+      content: '|';
+      animation: blink 0.7s infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+	
+	@keyframes slideInLeft {
+		0% { transform: translateX(-100%); opacity: 0; }
+		100% { transform: translateX(0); opacity: 1; }
+	}
+
+	@keyframes slideInRight {
+		0% { transform: translateX(100%); opacity: 0; }
+		100% { transform: translateX(0); opacity: 1; }
+	}
+	
+	.animate-slide-left {
+		animation: slideInLeft 0.8s ease-out forwards;
+	}
+	
+	.animate-slide-right {
+		animation: slideInRight 0.8s ease-out forwards;
+	}
+	
+	.bear-img { width: 100%; margin-top: 20px; border-radius: 15px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.0); }
+	
+  </style>
+</head>
+<body class="bg-gradient-to-b from-pink-100 via-pink-200 to-pink-300 font-poppins min-h-screen flex items-center justify-center overflow-hidden text-rose-900">
+
+	<audio id="bg-music" loop preload="auto">
+        <source src="Birthday.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+  <!-- Background Floating Hearts -->
+  <div class="absolute inset-0 pointer-events-none z-0 overflow-hidden" id="bgHearts"></div>
+
+  <!-- Mobile Frame / Main Container -->
+  <div id="app" class="relative w-full max-w-[420px] h-screen max-h-[880px] bg-gradient-to-b from-pink-100 to-pink-200 sm:h-[92vh] sm:rounded-[40px] sm:border-8 sm:border-white/60 shadow-2xl flex flex-col items-center justify-center overflow-hidden z-10 p-5">
+
+	<div class="absolute right-4 top-4 z-30 sm:right-6">
+    <button id="music-btn" class="w-9 h-9 bg-white/90 rounded-full flex items-center justify-center shadow-md hover:bg-white text-[#722F37] transition-transform active:scale-95 cursor-pointer">
+        🎵
+    </button>
+	</div>
+  
+    <!-- SCREEN 1: QR CODE INTRO -->
+    <div class="screen active" id="screen1">
+      <div class="bg-white p-6 rounded-3xl shadow-xl text-center cursor-pointer w-[85%] transition-transform active:scale-95 flex flex-col items-center justify-center" onclick="nextScreen(2)">
+        <div class="font-cursive text-4xl text-rose-800 mb-2 font-bold">Shalini</div>
+        
+        <!-- Heart with QR Scanner inside -->
+        <div class="relative w-[250px] h-[240px] flex items-center justify-center my-2">
+          <!-- Large Heart Background -->
+          <svg class="absolute inset-0 w-full h-full fill-rose-600 drop-shadow-md" viewBox="0 0 24 24">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+          </svg>
+          
+          <!-- Scaled-down QR Code to fit inside heart bounds -->
+          <img class="relative z-10 w-[100px] h-[100px] rounded-lg shadow-sm border-2 border-white/20 mb-2" 
+               src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://manishavasthi.github.io/Sorry/&color=be123c" 
+               alt="QR Code">
+        </div>
+        <div class="text-xs text-rose-500 mt-1">♥ ♥</div>
+      </div>
+
+      <div class="mt-8 text-lg text-rose-800 flex items-center gap-2 cursor-pointer" id="qrHint" onclick="startLoading()">
+        <span>Tap to open</span>
+      </div>
+    </div>
+
+    <!-- SCREEN 2: GREETING & EXCITEMENT QUESTION -->
+    <div class="screen" id="screen2">
+      <h1 class="font-cursive text-5xl text-rose-800 text-center mb-4 leading-tight">Happy Birthday,<br>Shalini</h1>
+      
+      <!-- Cute Bears & Cake Illustration SVG -->
+      <svg class="w-72 h-48 my-3" viewBox="0 0 240 150">
+        <!-- Banner Garland -->
+        <path d="M 20 25 Q 120 55 220 25" fill="none" stroke="#fb7185" stroke-width="2" stroke-dasharray="4"/>
+        <polygon points="40,32 50,50 30,50" fill="#f43f5e"/>
+        <polygon points="80,39 90,57 70,57" fill="#60a5fa"/>
+        <polygon points="120,41 130,59 110,59" fill="#34d399"/>
+        <polygon points="160,39 170,57 150,57" fill="#fbbf24"/>
+        <polygon points="200,32 210,50 190,50" fill="#c084fc"/>
+        
+        <!-- Brown Bear (Shifted Left) -->
+        <g transform="translate(10, 0)">
+          <circle cx="55" cy="100" r="28" fill="#a76953"/>
+          <circle cx="38" cy="80" r="9" fill="#a76953"/>
+          <circle cx="72" cy="80" r="9" fill="#a76953"/>
+          <circle cx="55" cy="105" r="11" fill="#d7a18c"/>
+          <circle cx="48" cy="98" r="3" fill="#2d1810"/>
+          <circle cx="62" cy="98" r="3" fill="#2d1810"/>
+          <ellipse cx="55" cy="103" rx="4" ry="3" fill="#2d1810"/>
+          <!-- Party Hat -->
+          <polygon points="55,60 45,78 65,78" fill="#f43f5e"/>
+        </g>
+
+        <!-- Birthday Cake (Centered in Spaced Middle) -->
+        <g transform="translate(15, 0)">
+          <!-- Cake Base -->
+          <rect x="90" y="102" width="30" height="22" rx="4" fill="#f43f5e"/>
+          <!-- Icing Layer -->
+          <path d="M 88 102 Q 95 108 105 102 Q 115 108 122 102 L 122 97 L 88 97 Z" fill="#ffffff"/>
+          <!-- Candle -->
+          <rect x="103" y="86" width="4" height="11" fill="#fef08a"/>
+          <!-- Flame -->
+          <circle cx="105" cy="83" r="3" fill="#f97316"/>
+          <!-- Cake Decor Text -->
+          <rect x="92" y="110" width="26" height="7" rx="2" fill="#fef08a"/>
+        </g>
+        
+        <!-- White Panda Bear (Shifted Right) -->
+        <g transform="translate(-1, 0)">
+          <circle cx="175" cy="100" r="28" fill="#f8fafc"/>
+          <circle cx="158" cy="80" r="9" fill="#334155"/>
+          <circle cx="192" cy="80" r="9" fill="#334155"/>
+          <ellipse cx="167" cy="96" rx="5" ry="6" fill="#334155"/>
+          <ellipse cx="183" cy="96" rx="5" ry="6" fill="#334155"/>
+          <circle cx="168" cy="95" r="2" fill="#fff"/>
+          <circle cx="182" cy="95" r="2" fill="#fff"/>
+          <circle cx="175" cy="104" r="3" fill="#334155"/>
+          <!-- Party Hat -->
+          <polygon points="175,60 165,78 185,78" fill="#60a5fa"/>
+        </g>
+      </svg>
+
+      <p class="text-rose-700 font-semibold text-center mb-4">Are you excited for what's next?</p>
+
+      <!-- Bound Container for Dodge Buttons -->
+      <div class="relative w-full max-w-[320px] h-32 flex justify-center items-start gap-6 pt-2" id="btnContainer">
+        <button class="bg-rose-500 hover:bg-rose-600 text-white font-bold px-8 py-2.5 rounded-full shadow-lg transition" onclick="nextScreen(3)">Yes</button>
+        <button class="bg-white text-rose-800 font-bold px-8 py-2.5 rounded-full shadow-md border border-rose-200 transition-all duration-200" id="noBtn" onmouseover="moveNoBtn()" onclick="moveNoBtn()">No</button>
+      </div>
+    </div>
+
+    <!-- SCREEN 3: BALLOON POPPING GAME -->
+    <div class="screen" id="screen3">
+      <div class="absolute top-5 right-16 bg-white/80 px-4 py-1.5 rounded-full text-xs font-bold text-rose-700 shadow-sm" id="balloonCounter">0/4 POPPED</div>
+      <h1 class="font-cursive text-4xl text-rose-700 text-center mb-6">Pop all 4 balloons</h1>
+
+      <div class="grid grid-cols-2 gap-y-8 gap-x-6 w-full max-w-[300px] mt-4">
+        <!-- Balloon 1 -->
+        <div class="balloon-box h-32 flex flex-col items-center justify-center cursor-pointer relative" onclick="popBalloon(this, 'You')">
+          <svg class="balloon-svg w-24 h-28 transition-transform hover:scale-105 hover:-translate-y-1 filter drop-shadow-md" viewBox="0 0 100 120">
+            <ellipse cx="50" cy="45" rx="35" ry="42" fill="#93c5fd"/>
+            <path d="M 50 87 L 45 95 L 55 95 Z" fill="#60a5fa"/>
+            <path d="M 50 95 Q 40 108 52 120" fill="none" stroke="#93c5fd" stroke-width="2"/>
+          </svg>
+          <span class="balloon-word font-cursive text-4xl font-bold text-rose-800 opacity-0 scale-50 transition-all duration-300">You</span>
+        </div>
+
+        <!-- Balloon 2 -->
+        <div class="balloon-box h-32 flex flex-col items-center justify-center cursor-pointer relative" onclick="popBalloon(this, 'are')">
+          <svg class="balloon-svg w-24 h-28 transition-transform hover:scale-105 hover:-translate-y-1 filter drop-shadow-md" viewBox="0 0 100 120">
+            <ellipse cx="50" cy="45" rx="35" ry="42" fill="#DC143C"/>
+            <path d="M 50 87 L 45 95 L 55 95 Z" fill="#f472b6"/>
+            <path d="M 50 95 Q 60 108 48 120" fill="none" stroke="#DC143C" stroke-width="2"/>
+          </svg>
+          <span class="balloon-word font-cursive text-4xl font-bold text-rose-800 opacity-0 scale-50 transition-all duration-300">are</span>
+        </div>
+
+        <!-- Balloon 3 -->
+        <div class="balloon-box h-32 flex flex-col items-center justify-center cursor-pointer relative" onclick="popBalloon(this, 'so')">
+          <svg class="balloon-svg w-24 h-28 transition-transform hover:scale-105 hover:-translate-y-1 filter drop-shadow-md" viewBox="0 0 100 120">
+            <ellipse cx="50" cy="45" rx="35" ry="42" fill="#6ee7b7"/>
+            <path d="M 50 87 L 45 95 L 55 95 Z" fill="#34d399"/>
+            <path d="M 50 95 Q 40 108 52 120" fill="none" stroke="#6ee7b7" stroke-width="2"/>
+          </svg>
+          <span class="balloon-word font-cursive text-4xl font-bold text-rose-800 opacity-0 scale-50 transition-all duration-300">so</span>
+        </div>
+
+        <!-- Balloon 4 -->
+        <div class="balloon-box h-32 flex flex-col items-center justify-center cursor-pointer relative" onclick="popBalloon(this, 'special')">
+          <svg class="balloon-svg w-24 h-28 transition-transform hover:scale-105 hover:-translate-y-1 filter drop-shadow-md" viewBox="0 0 100 120">
+            <ellipse cx="50" cy="45" rx="35" ry="42" fill="#c084fc"/>
+            <path d="M 50 87 L 45 95 L 55 95 Z" fill="#a855f7"/>
+            <path d="M 50 95 Q 60 108 48 120" fill="none" stroke="#c084fc" stroke-width="2"/>
+          </svg>
+          <span class="balloon-word font-cursive text-4xl font-bold text-rose-800 opacity-0 scale-50 transition-all duration-300">special</span>
+        </div>
+      </div>
+    </div>
+
+		<!-- SCREEN 3B: REVEALED MESSAGE WITH NON-STOP CONFETTI -->
+	<div class="screen flex flex-col items-center justify-center text-center overflow-hidden" id="screen3b">
+	  <!-- Container for falling sprinkles/sparkles animation -->
+	  <div id="sprinklesContainer" class="absolute inset-0 pointer-events-none z-0 overflow-hidden"></div>
+
+	  <div class="absolute top-5 right-16 bg-white/80 px-4 py-1.5 rounded-full text-xs font-bold text-rose-700 shadow-sm z-10">4/4 POPPED</div>
+	  <h2 class="font-bold text-lg text-rose-800 mb-8 z-10">Pop all 4 balloons</h2>
+	  
+	  <div class="font-cursive text-5xl font-bold text-rose-800 my-6 leading-relaxed z-10">
+		You are so special
+	  </div>
+
+	  <button class="mt-12 bg-rose-500 hover:bg-rose-600 text-white font-bold px-8 py-2.5 rounded-full shadow-lg transition active:scale-95 cursor-pointer z-10" onclick="goToScreen4()">
+		Next →
+	  </button>
+	</div>
+
+    <!-- SCREEN 4: CAKE & CANDLE BLOWING -->
+    <div class="screen" id="screen4">
+      <h1 class="font-cursive text-5xl text-rose-700 text-center mb-2">Blow the candle</h1>
+
+      <div class="relative w-[260px] h-[260px] my-3 cursor-pointer flex items-center justify-center" onclick="blowOutCandle()">
+        <img id="cakeGif" src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExd3hxdTRyaHo5N2ljNjFmZDViaXFzcDdoenBkY3gxaWtqZnl2MmQ3ayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Lkw7QvEHjNeiHN2poQ/giphy.gif" alt="Birthday Cake" class="w-full h-full object-cover rounded-3xl shadow-lg transition-opacity duration-500">
+      </div>
+
+      <div class="text-rose-700 font-semibold text-center text-sm cursor-pointer mt-2" onclick="blowOutCandle()">
+        🎤 Blow into the mic <br><span class="text-xs opacity-70">(or tap the cake)</span>
+      </div>
+
+      <!-- Make a Wish Dark Overlay -->
+      <div class="absolute inset-0 bg-slate-950/80 z-20 flex flex-col items-center justify-center opacity-0 pointer-events-none transition-opacity duration-1000 p-8 text-center" id="darkOverlay">
+        <p class="font-cursive text-rose-100 text-5xl leading-snug drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]">Close your eyes<br>& make a wish</p>
+      </div>
+    </div>
+
+    <!-- SCREEN 5: ROSES BOUQUET WITH POPUP MESSAGES -->
+    <div class="screen" id="screen5">
+      <h2 class="font-cursive text-4xl text-rose-800 text-center mb-2 font-bold flex items-center justify-center gap-2">
+        Your Rose Bouquet 🌹
+      </h2>
+
+      <!-- Main Container -->
+      <div class="relative w-full max-w-[320px] h-[340px] flex items-center justify-center overflow-hidden">
+        
+        <!-- Detailed Rose Bouquet SVG Background -->
+        <div class="absolute inset-0 flex items-center justify-center z-0 opacity-80 pointer-events-none">
+		<img src="https://static.vecteezy.com/system/resources/thumbnails/036/277/085/small_2x/ai-generated-bouquet-of-pink-roses-isolated-on-transparent-background-free-png.png" alt="rose">
+        </div>
+
+        <!-- Animated Messages Container -->
+        <div class="relative z-10 w-full flex flex-col justify-between items-center h-full py-2">
+          <!-- Message 1 (From Left) -->
+          <div class="self-start ml-2 bg-white/90 backdrop-blur-md text-rose-900 text-xs font-semibold px-3 py-1.5 rounded-full shadow border border-rose-200 animate-slide-left whitespace-nowrap">
+            Forever you & me
+          </div>
+
+          <!-- Message 2 (From Right) -->
+          <div class="self-end mr-2 bg-white/90 backdrop-blur-md text-rose-900 text-xs font-semibold px-3 py-1.5 rounded-full shadow border border-rose-200 animate-slide-right whitespace-nowrap">
+            You make my world beautiful
+          </div>
+
+          <!-- Message 3 (From Left) -->
+          <div class="self-start ml-4 bg-white/90 backdrop-blur-md text-rose-900 text-xs font-semibold px-3 py-1.5 rounded-full shadow border border-rose-200 animate-slide-left whitespace-nowrap">
+            You are my sunshine 🌸
+          </div>
+
+          <!-- Message 4 (From Right) -->
+          <div class="self-end mr-4 bg-white/90 backdrop-blur-md text-rose-900 text-xs font-semibold px-3 py-1.5 rounded-full shadow border border-rose-200 animate-slide-right whitespace-nowrap">
+            Happy Birthday Shalini ❤️
+          </div>
+
+          <!-- Message 5 (From Left) -->
+          <div class="self-start ml-2 bg-white/90 backdrop-blur-md text-rose-900 text-xs font-semibold px-3 py-1.5 rounded-full shadow border border-rose-200 animate-slide-left whitespace-nowrap">
+            I'm lucky to have you
+          </div>
+
+          <!-- Message 6 (From Right) -->
+          <div class="self-end mr-2 bg-white/90 backdrop-blur-md text-rose-900 text-xs font-semibold px-3 py-1.5 rounded-full shadow border border-rose-200 animate-slide-right whitespace-nowrap">
+            My favorite person
+          </div>
+        </div>
+      </div>
+      <!-- Next Button -->
+      <button class="mt-4 bg-rose-500 hover:bg-rose-600 text-white font-bold px-8 py-2.5 rounded-full shadow-lg transition active:scale-95 cursor-pointer" onclick="nextScreen(6)">
+        Next →
+      </button>
+    </div>
+
+    <!-- SCREEN 6: ENVELOPE & LETTER -->
+    <div class="screen" id="screen6">
+      <div id="envelopeView" class="flex flex-col items-center">
+        <h1 class="font-cursive text-5xl text-rose-800 mb-8 text-center">A Message From My Heart</h1>
+        <div class="envelope-box relative w-52 h-36 bg-pink-200 rounded-xl cursor-pointer shadow-lg border-2 border-white flex items-center justify-center" id="envelope" onclick="openEnvelope()">
+          <div class="envelope-flap absolute top-0 left-0 w-0 h-0 border-l-[104px] border-l-transparent border-r-[104px] border-r-transparent border-t-[78px] border-t-pink-400 origin-top transition-transform duration-500"></div>
+          <span class="text-4xl z-10">💌</span>
+        </div>
+        <p class="text-rose-700 font-semibold mt-6">Tap the envelope</p>
+      </div>
+
+      <div class="hidden bg-amber-50 w-[90%] h-[75%] rounded-2xl p-6 shadow-md font-cursive text-2xl leading-relaxed text-rose-950 overflow-y-auto border border-rose-200" id="letterCard">
+        <div class="text-right mb-2">💖</div>
+        <div id="typewriterText" class="typing-cursor"></div>
+      </div>
+	  
+	  <!-- Next Button for Screen 6 -->
+		<div class="mt-4 flex justify-center w-full hidden" id="screen6NextBtn">
+			<button class="bg-rose-500 hover:bg-rose-600 text-white font-bold px-8 py-2.5 rounded-full shadow-lg transition active:scale-95 cursor-pointer flex items-center gap-2" onclick="nextScreen(7)">
+				<span>Next</span>
+				<span>➔</span>
+			</button>
+		</div>
+    </div>
+
+    <!-- SCREEN 7: GIFT BOX & FINAL SURPRISE -->
+    <div class="screen flex flex-col items-center justify-center text-center" id="screen7">
+      
+      <!-- Gift Section -->
+      <div id="giftSection" class="flex flex-col items-center justify-center w-full">
+        <h1 class="font-cursive text-5xl text-rose-800 mb-2">One Last Thing...</h1>
+        <p class="text-rose-700 font-semibold mb-6">Tap the gift</p>
+        
+        <div class="w-32 h-32 mx-auto cursor-pointer animate-bounce-gift" onclick="openGift()">
+          <svg viewBox="0 0 100 100" class="w-full h-full pointer-events-none">
+            <rect x="15" y="35" width="70" height="55" rx="8" fill="#f472b6"/>
+            <rect x="10" y="25" width="80" height="15" rx="4" fill="#fb7185"/>
+            <rect x="42" y="25" width="16" height="65" fill="#fff"/>
+            <path d="M 50 25 C 30 5, 20 25, 45 25 Z" fill="#fff"/>
+            <path d="M 50 25 C 70 5, 80 25, 55 25 Z" fill="#fff"/>
+          </svg>
+        </div>
+        <div id="countdown" class="hidden text-3xl font-bold text-rose-700 mt-4">3</div>
+      </div>
+
+      <!-- Final Card -->
+      <div class="hidden opacity-0 scale-75 transition-all duration-500 bg-white rounded-3xl p-6 w-[85%] max-w-[320px] text-center shadow-xl relative" id="finalCard">
+        <div class="absolute top-4 right-5 text-rose-500 text-lg">♥</div>
+        <img src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExeHVodmpsdjlsNjd1MnY0cTJmMDQ4b2V1OHozcmRxMW12aGI0OXF4NyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/z4x6fYcuwXWWyzhDid/giphy.gif" alt="Cute Bears" class="bear-img">
+        <h2 class="font-cursive text-4xl text-rose-800 mt-3">Lots of love for you 💕</h2>
+        <p class="text-xs text-rose-700 mt-2 font-semibold">Once again, Happy Birthday Shalini !</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Background Hearts Creation
+    const bgHearts = document.getElementById('bgHearts');
+    for (let i = 0; i < 25; i++) {
+      const heart = document.createElement('div');
+      heart.className = 'absolute text-red-600/80 animate-float-up';
+      heart.innerHTML = '♥';
+      heart.style.left = Math.random() * 100 + '%';
+      heart.style.animationDelay = Math.random() * 8 + 's';
+      heart.style.fontSize = (0.8 + Math.random() * 1.2) + 'rem';
+      bgHearts.appendChild(heart);
+    }
+
+    // Navigation Switcher
+    let currentScreen = 1;
+
+    function nextScreen(screenNum) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      const target = document.getElementById(`screen${screenNum}`);
+      if (target) {
+        target.classList.add('active');
+        currentScreen = screenNum;
+        
+        if (screenNum !== '3b') {
+          stopContinuousConfetti();
+        }
+        
+        if (screenNum === 5) triggerBouquetPopups();
+      }
+    }
+
+    // Screen 1 Loader
+    function startLoading() {
+      const hint = document.getElementById('qrHint');
+      hint.innerHTML = `<span class="inline-block w-3 h-3 rounded-full bg-rose-600 animate-pulse-fast"></span> Opening...`;
+      setTimeout(() => nextScreen(2), 1200);
+      tryPlayMusic();
+    }
+
+    // Screen 2 Dodge Button Logic
+    function moveNoBtn() {
+      const btn = document.getElementById('noBtn');
+      const container = document.getElementById('btnContainer');
+
+      const containerRect = container.getBoundingClientRect();
+      const btnRect = btn.getBoundingClientRect();
+
+      const maxX = (containerRect.width - btnRect.width) / 2;
+      const maxY = containerRect.height - btnRect.height;
+
+      const randomX = (Math.random() - 0.5) * maxX * 1.5;
+      const randomY = Math.random() * maxY;
+
+      btn.style.position = 'absolute';
+      btn.style.transform = `translate(${randomX}px, ${randomY}px)`;
+    }
+
+    // Screen 3 Balloon Popping
+    let poppedCount = 0;
+    function popBalloon(element, word) {
+      if (element.classList.contains('popped')) return;
+      
+      element.classList.add('popped');
+      poppedCount++;
+      document.getElementById('balloonCounter').innerText = `${poppedCount}/4 POPPED`;
+
+      confetti({ particleCount: 25, spread: 60, origin: { y: 0.6 } });
+
+      if (poppedCount === 4) {
+        setTimeout(() => {
+          triggerFullConfetti();
+          setTimeout(() => startScreen3B(), 1800);
+        }, 500);
+      }
+    }
+    
+    let continuousConfettiInterval = null;
+    function startScreen3B() {
+      nextScreen('3b');
+      startContinuousConfetti();
+    }
+
+    function startContinuousConfetti() {
+      triggerFullConfetti();
+      continuousConfettiInterval = setInterval(() => {
+        confetti({
+          particleCount: 50,
+          spread: 80,
+          origin: { y: 0.7 }
+        });
+      }, 1500);
+    }
+
+    function stopContinuousConfetti() {
+      if (continuousConfettiInterval) {
+        clearInterval(continuousConfettiInterval);
+        continuousConfettiInterval = null;
+      }
+    }
+
+    function goToScreen4() {
+      stopContinuousConfetti();
+      nextScreen(4);
+    }
+    
+    // Screen 4 Candle Blow
+    let isExtinguished = false;
+
+    function blowOutCandle() {
+      if (isExtinguished) return;
+      isExtinguished = true;
+
+      document.getElementById('cakeGif').classList.add('opacity-0');
+      
+      const darkOverlay = document.getElementById('darkOverlay');
+      darkOverlay.classList.remove('opacity-0', 'pointer-events-none');
+      darkOverlay.classList.add('opacity-100', 'pointer-events-auto');
+
+      triggerFullConfetti();
+
+      setTimeout(() => {
+        darkOverlay.classList.remove('opacity-100', 'pointer-events-auto');
+        darkOverlay.classList.add('opacity-0', 'pointer-events-none');
+        nextScreen(5);
+      }, 3200);
+    }
+
+    // Mic Recognition fallback
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const analyser = audioContext.createAnalyser();
+        const microphone = audioContext.createMediaStreamSource(stream);
+        const javascriptNode = audioContext.createScriptProcessor(2048, 1, 1);
+
+        analyser.smoothingTimeConstant = 0.8;
+        analyser.fftSize = 1024;
+
+        microphone.connect(analyser);
+        analyser.connect(javascriptNode);
+        javascriptNode.connect(audioContext.destination);
+
+        javascriptNode.onaudioprocess = function() {
+          const array = new Uint8Array(analyser.frequencyBinCount);
+          analyser.getByteFrequencyData(array);
+          let values = 0;
+          for (let i = 0; i < array.length; i++) values += array[i];
+          
+          if ((values / array.length) > 40 && !isExtinguished && currentScreen === 4) {
+            blowOutCandle();
+          }
+        };
+      }).catch(() => {});
+    }
+
+    function triggerBouquetPopups() {
+      const pills = document.querySelectorAll('.message-pill');
+      pills.forEach((pill, index) => {
+        setTimeout(() => {
+          pill.classList.remove('opacity-0', 'translate-y-4', 'scale-90');
+          pill.classList.add('opacity-100', 'translate-y-0', 'scale-100');
+        }, (index + 1) * 600);
+      });
+    }
+
+    // Screen 6 Letter
+    const letterMessage = `Dear Shalini,\n\nHappy Birthday to someone truly special! 🧁\n\nYou are Sweet, Loyal, My rock, and I'm so grateful to have you in my life.\n\nYou bring so much warmth and sweetness into my life. Every moment with you is precious.\n\nOn your special day, I wish you all the happiness, love, and joy that you deserve. May this year bring you countless beautiful moments and wonderful memories.\n\nHere's to celebrating you today and always! 🎉\n\nWith love and best wishes,\nYour Special Someone 💕`;
+
+    function openEnvelope() {
+      document.getElementById('envelope').classList.add('open');
+      setTimeout(() => {
+        document.getElementById('envelopeView').classList.add('hidden');
+        const letterCard = document.getElementById('letterCard');
+        letterCard.classList.remove('hidden');
+        typeWriter();
+      }, 700);
+    }
+
+    let charIdx = 0;
+    function typeWriter() {
+      const container = document.getElementById('typewriterText');
+      if (charIdx < letterMessage.length) {
+        const char = letterMessage.charAt(charIdx);
+        container.innerHTML += char === '\n' ? '<br>' : char;
+        charIdx++;
+        setTimeout(typeWriter, 38);
+      } else {
+        container.classList.remove('typing-cursor');
+        document.getElementById("screen6NextBtn").classList.remove("hidden");
+      }
+    }
+    
+    // Screen 7 Countdown
+    let isGiftOpened = false;
+    function openGift() {
+      if (isGiftOpened) return;
+      isGiftOpened = true;
+
+      const countdownEl = document.getElementById('countdown');
+      countdownEl.classList.remove('hidden');
+      let count = 3;
+      countdownEl.innerText = count;
+
+      const timer = setInterval(() => {
+        count--;
+        if (count > 0) {
+          countdownEl.innerText = count;
+        } else {
+          clearInterval(timer);
+          
+          document.getElementById('giftSection').classList.add('hidden');
+          const finalCard = document.getElementById('finalCard');
+          finalCard.classList.remove('hidden');
+          
+          setTimeout(() => {
+            finalCard.classList.remove('opacity-0', 'scale-75');
+            finalCard.classList.add('opacity-100', 'scale-100');
+            triggerFullConfetti();
+          }, 50);
+        }
+      }, 800);
+    }
+
+    function triggerFullConfetti() {
+      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+    }
+    
+    // Robust Music Control Implementation
+    const bgMusic = document.getElementById('bg-music');
+    const musicBtn = document.getElementById('music-btn');
+    let userManuallyStopped = false;
+
+    function tryPlayMusic() {
+        if (userManuallyStopped) return;
+        bgMusic.play().then(() => {
+            musicBtn.innerHTML = "🔊";
+            musicBtn.classList.add('animate-pulse');
+        }).catch(err => {
+            console.log("Autoplay waiting for user interaction");
+        });
+    }
+
+    musicBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!bgMusic.paused) {
+            bgMusic.pause();
+            userManuallyStopped = true;
+            musicBtn.innerHTML = "🎵";
+            musicBtn.classList.remove('animate-pulse');
+        } else {
+            userManuallyStopped = false;
+            bgMusic.play().then(() => {
+                musicBtn.innerHTML = "🔊";
+                musicBtn.classList.add('animate-pulse');
+            }).catch(err => {
+                console.log("Play failed:", err);
+            });
+        }
+    });
+
+    // Global interaction fallback to start music on first tap anywhere
+    function handleFirstInteraction(e) {
+        if (e.target.closest('#music-btn')) return;
+        tryPlayMusic();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('click', handleFirstInteraction, { once: true });
+        document.addEventListener('touchstart', handleFirstInteraction, { once: true });
+    });
+</script>
+  
+</body>
+</html>
